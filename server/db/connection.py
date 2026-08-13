@@ -1,17 +1,17 @@
-from logging import error
+from loguru import logger
 
 import aiosqlite
 
 from server.db.schema import run_schemas
 from utils.errors import handle_sqlite
-
-db_path = "../../main.db"
+from config import db_path
 
 async def setup_data_base_connection() -> aiosqlite.Connection | None:
     try:
+        logger.debug(f"DB Path: {db_path}")
         connection = await aiosqlite.connect(database=db_path)
         if not connection:
-            error("DB Connection failed to start.")
+            logger.error("DB Connection failed to start.")
         return connection
     except Exception as e:
         handle_sqlite(error=e)
