@@ -21,7 +21,7 @@ async def retry(token: str, max_retry, wait, client: Client):
     tries = 0
     logger.info(f"Starting Attempt {tries+1} for bot start...")
     logger.debug(f"max_retry = {max_retry}, client.is_closed() = {client.is_closed()}")
-    while (tries < max_retry):
+    while tries < max_retry:
         try:
             await client.start(
                 token=token,
@@ -75,8 +75,8 @@ def relaunchCurrentProcess(*, scriptPath: str):
 async def stopAll(botClient: Bot):
     await asyncio.sleep(2.0)
     config.api_shutdown.set()
+    config.lurkr_close()
     await botClient.close()
-    await access.stop_db()
 
 async def queRestart(botClient: Bot):
     await stopAll(botClient)

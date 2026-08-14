@@ -1,14 +1,15 @@
 import mimetypes
 
 from discord import Client, Intents, Status, CustomActivity, PartialEmoji
-from discord.ext.commands import Bot, Cog
+from discord.ext.commands import Bot
 from loguru import logger
 
-from config import bot_token, cogs_dir, setApiClient, authorized_guild
+import config
+from config import bot_token, cogs_dir, setApiClient, authorized_guild, lurkr_afk, lurkr_guilds, lurkr_api_key, lurkr_xp, lurkr_tick
 from utils.runtimeUtils import startBot
 from bot.cogs.utilsCog import try_update_restart_message
 import os
-
+from bot.modules.lurkr import run_main_lurkr
 
 
 async def register_cogs(client: Bot):
@@ -62,6 +63,15 @@ async def onReady(botClient: Bot):
         cmds = [cmd.name for cmd in botClient.tree.get_commands()]
         logger.debug(f"Global commands: {cmds}")
         await try_update_restart_message(botClient)
+        close_lurkr = run_main_lurkr(
+            susannaClient=botClient,
+            tick=lurkr_tick,
+            afk=lurkr_afk,
+            lurkr_token=lurkr_api_key,
+            xp=lurkr_xp,
+            guilds=lurkr_guilds
+        )
+        config.lurkr_close = close_lurkr
         logger.info("OnReady finished")
     except Exception as e:
         logger.error(f"Failed to run onReady: {e}")
@@ -73,8 +83,7 @@ async def setup_hook(botClient: Bot):
 
 async def startup():
     token = bot_token
-    logger.debug(f"Token is: {token[10:]}")
-    logger.debug(f"Bot Token is {bot_token[10:]}")
+    logger.debug(f"Token is: {token[10:] if token else "No token"}")
     if not token:
         raise ValueError("BOT TOKEN IS NONE OH SHITTINGS")
     logger.info("Registering bot...")

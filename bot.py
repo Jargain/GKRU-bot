@@ -1,5 +1,4 @@
 import asyncio
-import signal
 from asyncio import FIRST_COMPLETED, CancelledError
 
 from discord import Client
@@ -14,6 +13,8 @@ from utils.logging import setup_logging
 client: Client
 
 pending: set
+
+headless = False
 
 async def setup():
     logger.debug("Syncing main db")
@@ -39,6 +40,8 @@ async def cleanup():
     logger.debug("Closing client...")
     if config.apiClient:
         await config.apiClient.close()
+    logger.debug("Shutting lurkr down.")
+    config.lurkr_close()
     logger.info("Shutdown inner ring complete.")
 
 async def _run():
@@ -64,8 +67,10 @@ async def _run():
     finally:
         await cleanup()
 
+
 if __name__ == "__main__":
     setup_logging()
+
     try:
         logger.debug("Starting setup process")
         asyncio.run(_run())

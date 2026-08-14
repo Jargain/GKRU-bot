@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 from time import time
 from typing import Optional
 
@@ -10,7 +11,7 @@ from loguru import logger
 from config import authorized_guild
 from server.db.access import get_restart, clear_restart, log_restart
 from utils.permissions import is_bot_admin
-from utils.runtimeUtils import queRestart
+from utils.runtimeUtils import queRestart, stopAll
 
 #please work yo pleeeaasseee
 async def get_difference(time_in_s: int):
@@ -30,7 +31,17 @@ async def build_restart_embed(restart_complete: bool, time_in_s: Optional[int]) 
     if time_in_s:
         diff = await get_difference(time_in_s)
         embed.add_field(name="Restart duration", value=f"{diff} seconds")
-    embed.title = completed_text if restart_complete else scheduled_text
+    embed.description = completed_text if restart_complete else scheduled_text
+    return embed
+
+async def _build_shutdown_embed() -> Embed:
+    color = Color.green()
+    embed = Embed(
+        color=color,
+        timestamp=datetime.datetime.now(),
+        title="Shutdown Notification",
+        description="Shutting down in 10 seconds. This message will be deleted automatically."
+    )
     return embed
 
 async def try_update_restart_message(botClient: Bot):
@@ -105,6 +116,36 @@ class utils(commands.Cog):
         asyncio.create_task(
             queRestart(botClient=self.bot)
         )
+
+    @hybrid_command(
+        name="shutdown",
+        with_app_command=True,
+        description="Another classic, you need to be a bot admin for this one to work.",
+    )
+    @app_commands.default_permissions(
+        permissions.Permissions.elevated()
+    )
+    @app_commands.guilds(authorized_guild)
+    async def shut_down(self, ctx: Context):
+        member : Member = ctx.author
+
+        if not Member:
+            return
+
+        if not await is_bot_admin(member):
+            await ctx.reply(
+                content="You need to be a bot administrator to do this."
+            )
+            return
+        logger.info(f"Shutting down from command ran by {member.display_name} ( {member.name} | {member.id})")
+
+        message = await ctx.reply(
+            embed=await _build_shutdown_embed()
+        )
+        await asyncio.sleep(10.0)
+        await message.delete()
+        await stopAll(self.bot)
+
 
 async def setup(bot: Bot):
     await bot.add_cog(utils(bot))

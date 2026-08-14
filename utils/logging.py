@@ -41,7 +41,8 @@ def create_logging_list():
         "discord.http",
         "discord.gateway",
         "discord.websocket",
-        "aiosqlite"
+        "aiosqlite",
+        "lurkr"
     ]
     return list_logger
 
