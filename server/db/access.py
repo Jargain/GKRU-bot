@@ -3,12 +3,15 @@ from time import time
 from typing import Optional
 
 import aiosqlite
+from aiosqlite import cursor
 from discord import Message
 from loguru import logger
 
 from server.db.connection import create_init_db
 
 con: Optional[aiosqlite.Connection] = None
+
+lookup_eligible = ["modlogs","moderators"]
 
 async def start_db():
     global con
@@ -36,6 +39,7 @@ async def log_restart(
         VALUES (?,?,?,?,?)
     """, (int(time()), user, message, channel, arguments)
     )
+    await con.commit()
     await cursor.close()
 
 async def get_restart():
@@ -50,4 +54,45 @@ async def clear_restart():
     await cursor.execute("""
     DELETE FROM restart
     """)
+    await cursor.close()
+
+async def log_audit(
+        user_id: int,
+        action: str
+):
+    cursor = await con.cursor()
+    await cursor.execute("""
+        INSERT INTO audit_log (discord_userid, action, time)
+            VALUES (?, ?, ?)
+    """, (user_id, action, int(time()))
+    )
+    await cursor.close()
+
+async def get_audit_from(
+        user_id: int
+):
+    cursor = await con.cursor()
+    await cursor.execute("""SELECT * FROM audit_log WHERE discord_userid = ?""", [user_id] )
+    audit_logs = await cursor.fetchall()
+    await cursor.close()
+    return audit_logs
+
+async def get_audit_from_action(
+        user_id: int,
+        action: str
+):
+    cursor = await con.cursor()
+    await cursor.execute("""SELECT * FROM audit_log WHERE discord_userid = ? AND action LIKE ?% """, (user_id, action))
+    audit_logs = await cursor.fetchall()
+    await cursor.close()
+    return audit_logs
+
+async def get_audit_action(
+        action: str
+):
+    cursor = await con.cursor()
+    await cursor.execute("""SELECT * FROM audit_log WHERE action LIKE ?% """, action)
+    audit_logs = await cursor.fetchall()
+    await cursor.close()
+    return audit_logs
 

@@ -5,12 +5,12 @@ from typing import Optional
 
 from discord import app_commands, Embed, Color, permissions, Member
 from discord.ext import commands
-from discord.ext.commands import Bot, hybrid_command, Context
+from discord.ext.commands import Bot, Context
+from utils.commandUtils import chybrid_command
 from loguru import logger
 
 from config import authorized_guild
 from server.db.access import get_restart, clear_restart, log_restart
-from utils.permissions import is_bot_admin
 from utils.runtimeUtils import queRestart, stopAll
 
 #please work yo pleeeaasseee
@@ -70,36 +70,34 @@ class utils(commands.Cog):
         self.bot = bot
         self.build_restart_embed = build_restart_embed
 
-    @hybrid_command(name="ping", with_app_command=True, description="Replies with the ping to discord servers.")
+    @chybrid_command(
+        name="ping",
+        description="Simple ping command"
+    )
     async def ping(self, ctx: Context):
         latency = self.bot.latency
         await ctx.reply(str(latency))
 
-    @hybrid_command(name="say", with_app_command=True)
-    @app_commands.guilds(authorized_guild)
+    @chybrid_command(
+        name="say",
+        description="Simple command that repeats any given text",
+        guilds=[authorized_guild],
+        default_permissions=permissions.Permissions.elevated()
+    )
+    @app_commands.describe(
+        text="The text to be repeated."
+    )
     async def say(self, ctx: Context, text: str):
         await ctx.send(text)
 
-    @hybrid_command(
+    @chybrid_command(
         name="restart",
-        with_app_command=True,
-        description="A classic, you need to be a bot admin for this one to work.",
+        description="This command restarts the bot and api. You need to be a bot administrator to run this.",
+        default_permissions=permissions.Permissions.elevated(),
+        guilds=[authorized_guild],
+        bot_admin=True
     )
-    @app_commands.default_permissions(
-        permissions.Permissions.elevated()
-    )
-    @app_commands.guilds(authorized_guild)
     async def restart(self, ctx: Context):
-        member : Member = ctx.author
-
-        if not Member:
-            return
-
-        if not await is_bot_admin(member):
-            await ctx.reply(
-                content="You need to be a bot administrator to do this."
-            )
-            return
 
         arguments = ""
         embed = await self.build_restart_embed(False, None)
@@ -117,27 +115,19 @@ class utils(commands.Cog):
             queRestart(botClient=self.bot)
         )
 
-    @hybrid_command(
-        name="shutdown",
-        with_app_command=True,
-        description="Another classic, you need to be a bot admin for this one to work.",
+    @chybrid_command(
+        name="stop",
+        description="This command stops the bot and api. You need to be a bot administrator to run this.",
+        default_permissions=permissions.Permissions.elevated(),
+        guilds=[authorized_guild],
+        bot_admin=True
     )
-    @app_commands.default_permissions(
-        permissions.Permissions.elevated()
-    )
-    @app_commands.guilds(authorized_guild)
     async def shut_down(self, ctx: Context):
-        member : Member = ctx.author
 
-        if not Member:
+        if not isinstance(ctx.author, Member):
             return
 
-        if not await is_bot_admin(member):
-            await ctx.reply(
-                content="You need to be a bot administrator to do this."
-            )
-            return
-        logger.info(f"Shutting down from command ran by {member.display_name} ( {member.name} | {member.id})")
+        logger.info(f"Shutting down from command ran by {ctx.author.display_name} ( {ctx.author.name} | {ctx.author.id})")
 
         message = await ctx.reply(
             embed=await _build_shutdown_embed()

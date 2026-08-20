@@ -12,6 +12,9 @@ async def setup_data_base_connection() -> aiosqlite.Connection | None:
         connection = await aiosqlite.connect(database=db_path)
         if not connection:
             logger.error("DB Connection failed to start.")
+        await connection.execute("PRAGMA journal_mode=WAL;")
+        await connection.execute("PRAGMA synchronous=NORMAL;")
+        await connection.commit()
         return connection
     except Exception as e:
         handle_sqlite(error=e)

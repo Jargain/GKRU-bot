@@ -24,9 +24,9 @@ class mode(Enum):
 def get_env_var(k: str):
     return environ.get(k.upper()) or environ.get(k.lower()) or environ.get(k)
 
-current_mode = mode.LIVE
+current_mode = mode.DEBUG
 
-logging_level = "INFO" if current_mode == mode.LIVE else "DEBUG"
+logging_level = "DEBUG" if current_mode == mode.LIVE else "DEBUG"
 log_discord = True if current_mode == mode.DEBUG else False
 log_hypercorn = True if current_mode == mode.DEBUG else False
 log_sql = True if current_mode == mode.DEBUG else False

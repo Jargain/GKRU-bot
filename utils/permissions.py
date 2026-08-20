@@ -1,4 +1,6 @@
 import discord
+from discord.ext.commands import Context
+
 from config import bot_administrators, authorized_guild, apiClient
 
 async def has_ban_permission(user: discord.Member) -> bool:
@@ -38,3 +40,12 @@ async def is_bot_admin(user: discord.Member) -> bool:
     :param user: The user to check
     """
     return int(user.id) in bot_administrators
+
+async def is_bot_admin_ctx(ctx: Context) -> bool:
+    """
+    Checks is the given context author is a bot administrator.
+    :param ctx: The Context
+    """
+    if not isinstance(ctx.author, discord.Member):
+        return False
+    return await is_bot_admin(ctx.author)
