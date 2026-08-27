@@ -196,7 +196,8 @@ async def attempt_log(
         )
         logger.debug("Sent message, creating thread...")
         await log_msg.create_thread(
-            name=f"User: {member.name} ({member.id})"
+            name=f"User: {member.name} ({member.id}) | {datetime.now()}",
+            auto_archive_duration=10080
         )
 
         return log_msg
