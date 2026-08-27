@@ -195,9 +195,12 @@ async def attempt_log(
             embed=log_embed
         )
         logger.debug("Sent message, creating thread...")
-        await log_msg.create_thread(
+        thread = await log_msg.create_thread(
             name=f"User: {member.name} ({member.id}) | {random.randint(a=1,b=50)}",
             auto_archive_duration=10080
+        )
+        await thread.send(
+            content=moderator.mention
         )
 
         return log_msg
