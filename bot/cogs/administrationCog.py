@@ -137,13 +137,13 @@ class AdministrationCog(commands.Cog):
         bot_admin=True,
         guilds=[settings.authorized_guild],
     )
-    async def set_event_channel(self, ctx: Context):
+    async def del_event_channel(self, ctx: Context):
         try:
             channels = list(settings.event_channels)
             channels.remove(ctx.channel.id)
             settings.event_channels = channels
 
-            if settings.event_channels[-1] == ctx.channel.id:
+            if settings.event_channels[-1] != ctx.channel.id:
                 logger.debug("Deleted event channel successfully")
                 await attempt_ephemeral(
                     ctx,
