@@ -25,7 +25,7 @@ class mode(Enum):
 def get_env_var(k: str):
     return environ.get(k.upper()) or environ.get(k.lower()) or environ.get(k)
 
-current_mode = mode.DEBUG
+current_mode = mode.LIVE
 
 class _Settings(JSONClass):
 
@@ -71,6 +71,7 @@ settings = _Settings()
 settings.authorized_guild = 1532717797292113971 if current_mode == mode.LIVE else 1237911337057648790
 settings.bot_token = str(get_env_var("bot_token") if current_mode == mode.LIVE else get_env_var("testing_bot_token"))
 settings.lurkr_updatechannel = 1539970407115919470 if current_mode == mode.LIVE else 1540825740386377828
+settings.lurkr_guilds = [settings.authorized_guild]
 
 settings.logging_level = "DEBUG" if current_mode == mode.LIVE else "DEBUG"
 settings.log_discord = True if current_mode == mode.DEBUG else False

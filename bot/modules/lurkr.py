@@ -200,7 +200,9 @@ async def _run_main(
         _log.info("Closed all lurkr tasks.")
         raise
     except Exception as e:
-        _log.error(f"Lurkr failed due to error: {e}")
+        import traceback
+        traceback.print_exc()
+        _log.error(f"Lurkr failed due to error: {e!r}")
 
 
 def run_main_lurkr(
