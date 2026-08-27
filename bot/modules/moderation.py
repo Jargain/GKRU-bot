@@ -195,7 +195,7 @@ async def attempt_log(
     )
     logger.debug("Sent message, creating thread...")
     await log_msg.create_thread(
-        name=member.name
+        name=f"User: {member.name} ({member.id})"
     )
 
     return log_msg
