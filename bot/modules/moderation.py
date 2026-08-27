@@ -180,25 +180,29 @@ async def attempt_log(
         action: str,
         botClient: Bot
 ) -> Message | None:
-    logging_channel_id = settings.logging_channel
-    log_channel = botClient.get_channel(logging_channel_id)
-    logger.debug(f"Logging in channel: {log_channel.name}")
-    log_embed = build_log_embed(
-        moderator, member, reason, action
-    )
-    logger.debug("Created embed, sending message")
-    if not isinstance(log_channel, TextChannel):
-        logger.debug("Logging Channel not a text channel!")
-        return None
-    log_msg = await log_channel.send(
-        embed=log_embed
-    )
-    logger.debug("Sent message, creating thread...")
-    await log_msg.create_thread(
-        name=f"User: {member.name} ({member.id})"
-    )
+    try:
+        logging_channel_id = settings.logging_channel
+        log_channel = botClient.get_channel(logging_channel_id)
+        logger.debug(f"Logging in channel: {log_channel.name}")
+        log_embed = build_log_embed(
+            moderator, member, reason, action
+        )
+        logger.debug("Created embed, sending message")
+        if not isinstance(log_channel, TextChannel):
+            logger.debug("Logging Channel not a text channel!")
+            return None
+        log_msg = await log_channel.send(
+            embed=log_embed
+        )
+        logger.debug("Sent message, creating thread...")
+        await log_msg.create_thread(
+            name=f"User: {member.name} ({member.id})"
+        )
 
-    return log_msg
+        return log_msg
+    except Exception as e:
+        logger.warning(f"Failed to create log: {e}")
+        return None
 
 async def attempt_loa_send(
     member: Member | User,

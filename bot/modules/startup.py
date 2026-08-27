@@ -1,6 +1,6 @@
 import mimetypes
 
-from discord import Intents, Status, CustomActivity, PartialEmoji, Message
+from discord import Intents, Status, CustomActivity, PartialEmoji, Message, Embed, Color
 from discord.ext.commands import Bot, Context, CommandError
 from loguru import logger
 
@@ -12,7 +12,6 @@ from utils.errors import onCommandError
 from bot.cogs.utilsCog import try_update_restart_message
 import os
 from bot.modules.lurkr import run_main_lurkr
-
 
 async def register_cogs(client: Bot):
     cogs = os.listdir(settings.cogs_dir)
@@ -84,8 +83,8 @@ async def onReady(botClient: Bot):
 async def setup_hook(botClient: Bot):
     await register_cogs(client=botClient)
 
-async def _on_command_error(ctx: Context, error: CommandError):
-    await onCommandError(ctx,error)
+async def _on_command_error(ctx: Context, error: CommandError, botClient: Bot):
+    await onCommandError(ctx,error,botClient)
 
 async def _on_message(botClient: Bot, message: Message):
     logger.debug("Checking message")
@@ -120,7 +119,7 @@ async def startup():
 
     @client.event
     async def on_command_error(ctx: Context, error: CommandError):
-        await _on_command_error(ctx, error)
+        await _on_command_error(ctx, error, client)
 
     @client.event
     async def on_message(message: Message):

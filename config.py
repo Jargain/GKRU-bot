@@ -25,7 +25,7 @@ class mode(Enum):
 def get_env_var(k: str):
     return environ.get(k.upper()) or environ.get(k.lower()) or environ.get(k)
 
-current_mode = mode.LIVE
+current_mode = mode.DEBUG
 
 class _Settings(JSONClass):
 

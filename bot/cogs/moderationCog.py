@@ -4,7 +4,7 @@ from discord.ext.commands import Bot, Context
 from loguru import logger
 
 from config import settings
-from utils.commandUtils import chybrid_command
+from utils.commandUtils import chybrid_command, attempt_ephemeral
 from bot.modules.moderation import LoaModal, attempt_log
 
 class ModerationCog(commands.Cog):
@@ -19,26 +19,22 @@ class ModerationCog(commands.Cog):
         guilds=[settings.authorized_guild]
     )
     async def loa(self, ctx: Context):
-        try:
-            if not ctx.interaction:
-                await ctx.send(
-                    content="Sorry, please use the slash command, this command does not support text commands.",
-                    delete_after=5
-                )
-                return
-
-            logger.debug("Creating modal...")
-            modal = LoaModal(
-                botClient=self.bot
+        if not ctx.interaction:
+            await ctx.send(
+                content="Sorry, please use the slash command, this command does not support text commands.",
+                delete_after=5
             )
-            logger.debug("Sending modal...")
-            await ctx.interaction.response.send_modal(modal)
-            await ctx.interaction.followup.send(
-                content="LOA Modal Opened.",
-                ephemeral=True
-            )
-        except Exception as e:
-            logger.warning(f"Failed to create modal: {e}")
+            return
+        logger.debug("Creating modal...")
+        modal = LoaModal(
+            botClient=self.bot
+        )
+        logger.debug("Sending modal...")
+        await ctx.interaction.response.send_modal(modal)
+        await ctx.interaction.followup.send(
+            content="LOA Modal Opened.",
+            ephemeral=True
+        )
 
     @chybrid_command(
         name="log",
@@ -60,27 +56,13 @@ class ModerationCog(commands.Cog):
             botClient=self.bot
         )
         if log_msg is not None:
-            if ctx.interaction:
-                await ctx.interaction.response.send_message(
-                    content=log_msg.jump_url,
-                    ephemeral=True
-                )
-            else:
-                await ctx.reply(
-                    content=log_msg.jump_url,
-                    delete_after=5
-                )
+            await attempt_ephemeral(
+                ctx, log_msg.jump_url
+            )
         else:
-            if ctx.interaction:
-                await ctx.interaction.response.send_message(
-                    content="Failed to create log message.",
-                    ephemeral=True
-                )
-            else:
-                await ctx.reply(
-                    content="Failed to create log message.",
-                    delete_after=5
-                )
+            await attempt_ephemeral(
+                ctx, "Filed to create log message"
+            )
 
 
 async def setup(bot: Bot):

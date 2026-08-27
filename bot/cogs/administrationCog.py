@@ -23,25 +23,23 @@ class AdministrationCog(commands.Cog):
         permission="The permission level that role should be given"
     )
     async def set_perm(self, ctx: Context, role: Role, permission: int):
-        try:
-            logger.debug("Setting role link...")
-            roles = settings.permission_integer_roles
-            roles[str(role.id)] = permission
-            settings.permission_integer_roles = roles
-            logger.debug("Set role link...")
-            if settings.permission_integer_roles:
-                await attempt_ephemeral(
-                    ctx,
-                    f"Successfully linked role {role.name} to permission integer {permission}"
-                )
-            else:
-                await attempt_ephemeral(
-                    ctx,
-                    f"Failed to link {role.name} to permission integer {permission}"
-                )
-            logger.debug(f"Current role links: {settings.permission_integer_roles}")
-        except Exception as e:
-            logger.warning(f"Unable to link roles: {e}")
+        logger.debug("Setting role link...")
+        roles = settings.permission_integer_roles
+        roles[str(role.id)] = permission
+        settings.permission_integer_roles = roles
+        logger.debug("Set role link...")
+        if settings.permission_integer_roles:
+            await attempt_ephemeral(
+                ctx,
+                f"Successfully linked role {role.name} to permission integer {permission}"
+            )
+        else:
+            await attempt_ephemeral(
+                ctx,
+                f"Failed to link {role.name} to permission integer {permission}"
+            )
+        logger.debug(f"Current role links: {settings.permission_integer_roles}")
+        logger.warning(f"Unable to link roles: {e}")
 
     @chybrid_command(
         name="setevent",
@@ -50,25 +48,21 @@ class AdministrationCog(commands.Cog):
         guilds=[settings.authorized_guild],
     )
     async def set_event_channel(self, ctx: Context):
-        try:
-            channels = list(settings.event_channels)
-            channels.append(ctx.channel.id)
-            settings.event_channels = channels
-
-            if settings.event_channels[-1] == ctx.channel.id:
-                logger.debug("Set event channel successfully")
-                await attempt_ephemeral(
-                    ctx,
-                    f"Successfully set channel {ctx.channel.name} as event channel."
-                )
-            else:
-                logger.warning("Did not set event channel successfully")
-                await attempt_ephemeral(
-                    ctx,
-                    "Failed to set event channel."
-                )
-        except Exception as e:
-            logger.warning(f"Failed to set event channel because: {e}")
+        channels = list(settings.event_channels)
+        channels.append(ctx.channel.id)
+        settings.event_channels = channels
+        if settings.event_channels[-1] == ctx.channel.id:
+            logger.debug("Set event channel successfully")
+            await attempt_ephemeral(
+                ctx,
+                f"Successfully set channel {ctx.channel.name} as event channel."
+            )
+        else:
+            logger.warning("Did not set event channel successfully")
+            await attempt_ephemeral(
+                ctx,
+                "Failed to set event channel."
+            )
 
     @chybrid_command(
         name="setwarn",
@@ -138,25 +132,21 @@ class AdministrationCog(commands.Cog):
         guilds=[settings.authorized_guild],
     )
     async def del_event_channel(self, ctx: Context):
-        try:
-            channels = list(settings.event_channels)
-            channels.remove(ctx.channel.id)
-            settings.event_channels = channels
-
-            if settings.event_channels[-1] != ctx.channel.id:
-                logger.debug("Deleted event channel successfully")
-                await attempt_ephemeral(
-                    ctx,
-                    f"Successfully removed channel {ctx.channel.name} from being an event channel."
-                )
-            else:
-                logger.warning("Did not remove event channel successfully")
-                await attempt_ephemeral(
-                    ctx,
-                    "Failed to remove event channel."
-                )
-        except Exception as e:
-            logger.warning(f"Failed to remove event channel because: {e}")
+        channels = list(settings.event_channels)
+        channels.remove(ctx.channel.id)
+        settings.event_channels = channels
+        if settings.event_channels[-1] != ctx.channel.id:
+            logger.debug("Deleted event channel successfully")
+            await attempt_ephemeral(
+                ctx,
+                f"Successfully removed channel {ctx.channel.name} from being an event channel."
+            )
+        else:
+            logger.warning("Did not remove event channel successfully")
+            await attempt_ephemeral(
+                ctx,
+                "Failed to remove event channel."
+            )
 
 
 async def setup(bot: Bot):
