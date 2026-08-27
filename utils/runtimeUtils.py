@@ -11,11 +11,12 @@ from discord import Client, Intents, LoginFailure, HTTPException, GatewayNotFoun
 from discord.ext.commands import Bot
 from loguru import logger
 
-import config
+from config import settings, lurkr_close
 from server.db import access
 
 path = Path('..')
 venv_path = Path('../.venv')
+SKIP_RESTART = False
 
 async def retry(token: str, max_retry, wait, client: Client):
     tries = 0
@@ -35,7 +36,7 @@ async def retry(token: str, max_retry, wait, client: Client):
         except GatewayNotFound:
             logger.error("Discord down, wrap it up")
         finally:
-            if client.is_closed():
+            if client.is_closed() and not SKIP_RESTART:
                 tries+=1
                 if tries < max_retry:
                     logger.debug(f"Restarting in {wait} secs...")
@@ -45,8 +46,8 @@ async def retry(token: str, max_retry, wait, client: Client):
 
 async def startBot(token: str, client: Bot) ->  None:
 
-    max_retry = config.max_retry
-    wait = config.retry_CD_s
+    max_retry = settings.max_retry
+    wait = settings.retry_CD_s
     await retry(
         token=token,
         max_retry=max_retry,
@@ -74,8 +75,9 @@ def relaunchCurrentProcess(*, scriptPath: str):
 
 async def stopAll(botClient: Bot):
     await asyncio.sleep(2.0)
-    config.api_shutdown.set()
-    config.lurkr_close()
+    global SKIP_RESTART
+    SKIP_RESTART = True
+    lurkr_close()
     await botClient.close()
 
 async def queRestart(botClient: Bot):

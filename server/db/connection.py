@@ -3,13 +3,12 @@ from loguru import logger
 import aiosqlite
 
 from server.db.schema import run_schemas
-from utils.errors import handle_sqlite
-from config import db_path
+from config import settings
 
 async def setup_data_base_connection() -> aiosqlite.Connection | None:
     try:
-        logger.debug(f"DB Path: {db_path}")
-        connection = await aiosqlite.connect(database=db_path)
+        logger.debug(f"DB Path: {settings.db_path}")
+        connection = await aiosqlite.connect(database=settings.db_path)
         if not connection:
             logger.error("DB Connection failed to start.")
         await connection.execute("PRAGMA journal_mode=WAL;")
@@ -17,7 +16,7 @@ async def setup_data_base_connection() -> aiosqlite.Connection | None:
         await connection.commit()
         return connection
     except Exception as e:
-        handle_sqlite(error=e)
+        logger.error(f"Error found while running db: {e}")
 
     return #Always return none if no db connection could be made
 

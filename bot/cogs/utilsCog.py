@@ -9,7 +9,7 @@ from discord.ext.commands import Bot, Context
 from utils.commandUtils import chybrid_command
 from loguru import logger
 
-from config import authorized_guild
+from config import settings
 from server.db.access import get_restart, clear_restart, log_restart
 from utils.runtimeUtils import queRestart, stopAll
 
@@ -81,7 +81,7 @@ class utils(commands.Cog):
     @chybrid_command(
         name="say",
         description="Simple command that repeats any given text",
-        guilds=[authorized_guild],
+        guilds=[settings.authorized_guild],
         default_permissions=permissions.Permissions.elevated()
     )
     @app_commands.describe(
@@ -94,7 +94,7 @@ class utils(commands.Cog):
         name="restart",
         description="This command restarts the bot and api. You need to be a bot administrator to run this.",
         default_permissions=permissions.Permissions.elevated(),
-        guilds=[authorized_guild],
+        guilds=[settings.authorized_guild],
         bot_admin=True
     )
     async def restart(self, ctx: Context):
@@ -119,7 +119,7 @@ class utils(commands.Cog):
         name="stop",
         description="This command stops the bot and api. You need to be a bot administrator to run this.",
         default_permissions=permissions.Permissions.elevated(),
-        guilds=[authorized_guild],
+        guilds=[settings.authorized_guild],
         bot_admin=True
     )
     async def shut_down(self, ctx: Context):

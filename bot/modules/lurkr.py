@@ -6,7 +6,7 @@ from typing import Optional, Callable, Sequence
 from logging import getLogger
 
 import aiohttp
-from discord import VoiceChannel, guild, Guild
+from discord import VoiceChannel, guild, Guild, Member, Embed, TextChannel
 from discord.ext.commands import Bot
 
 _log = getLogger("lurkr")
@@ -15,6 +15,18 @@ _base_url = 'https://api.lurkr.gg/v2/'
 _tasks = []
 _sesh = None
 _xp_gain_bonus = {}
+
+def build_update_embed(
+        member: Member,
+        xp_amount: int
+) -> Embed:
+    embed = Embed(
+        color=0xF1C40F,
+        title="Updated XP",
+        description=f"Added {xp_amount} xp to {member.display_name} ({member.name} | {member.id})",
+    )
+    embed.set_thumbnail(url=member.avatar.url)
+    return embed
 
 def _get_vcs(guilds: Sequence[Guild]) -> Sequence[VoiceChannel]:
     vcs: list[VoiceChannel] = []
@@ -40,27 +52,40 @@ def _filter_vc(afk: bool, vcs: Sequence[VoiceChannel]) -> Sequence[VoiceChannel]
 
 def _build_id_list(vc: VoiceChannel):
     _log.debug(f"Building member list for channel: {vc.name} ({vc.id})")
-    return [member for member,status in vc.voice_states.items() if not status.mute]
+    members = vc.members
+    filtered = [
+        member
+        for member in members if not member.voice.mute or member.voice.self_mute
+    ]
+    return filtered
 
 async def _upd_xp(
         sesh,
         guild_id,
-        member_id,
+        member: Member,
         xp,
+        Channel: Optional[TextChannel]
 ):
     data = {"xp":{"increment":xp}}
-    api_url = f'levels/{guild_id}/users/{member_id}'
+    api_url = f'levels/{guild_id}/users/{member.id}'
     _log.debug(f"Attempting to send PATCH with data: {data} ({api_url})")
     result = await sesh.patch(url=api_url, json=data)
     if result.status == 200:
         _log.debug("PATCH request success to lurkr")
+        if Channel:
+            _log.debug("Attempting to send update message...")
+            embed = build_update_embed(member=member, xp_amount=xp)
+            _log.debug(f"Sending update message to channel: {Channel.name} ({Channel.id})")
+            await Channel.send(
+                embed=embed
+            )
         return
     if result.status == 429:
         json = await result.json()
         cooldown = float(json["Retry-After"])
         _log.warning(f"Failed initial PATCH retying in : {cooldown} seconds")
         await asyncio.sleep(cooldown)
-        result = await sesh.post(f'/levels/{guild_id}/users/{member_id}', data=data)
+        result = await sesh.post(f'/levels/{guild_id}/users/{member.id}', data=data)
         if result.status == 200:
             return
         else:
@@ -77,6 +102,7 @@ async def _safely_check_update(
         tick: int,
         xp: int,
         sesh,
+        updateChannel: Optional[TextChannel]
 ):
     try:
         while True:
@@ -91,12 +117,13 @@ async def _safely_check_update(
             )
             guild_id = voice_channel.guild.id
 
-            for member_id in member_list:
+            for member in member_list:
                 await _upd_xp(
                     guild_id=guild_id,
-                    member_id=member_id,
+                    member=member,
                     xp=xp,
-                    sesh=sesh
+                    sesh=sesh,
+                    Channel=updateChannel
                 )
 
             diff = time.time() - start
@@ -117,6 +144,7 @@ async def _run_main(
         tick: int,
         xp: int,
         guilds: Optional[list[int]],
+        update_channel: Optional[int]
 ):
     global _tasks, _sesh
     try:
@@ -144,12 +172,19 @@ async def _run_main(
             ex.add_note("All VC's found are afk")
             raise ex
         _log.debug(f"Got {len(filtered_vcs)} filtered vc")
+        updateChannel = None
+        if update_channel:
+            updateChannel = susannaClient.get_channel(update_channel)
+            if not isinstance(updateChannel, TextChannel):
+                updateChannel = None
+
         _tasks = [
             asyncio.create_task(_safely_check_update(
             voice_channel=vc,
             tick=tick,
             xp=xp,
-            sesh=_sesh
+            sesh=_sesh,
+            updateChannel=updateChannel
         )) for vc in filtered_vcs]
         _log.info("Started lurkr!")
         await asyncio.Event().wait()
@@ -176,6 +211,7 @@ def run_main_lurkr(
         tick: int,
         xp: int,
         guilds: Optional[list[int]],
+        update_channel: Optional[int]
 ) -> Callable[[], None]:
     """
     Will start the lurkr Vc cycle, will stop when returning function is called.
@@ -186,6 +222,7 @@ def run_main_lurkr(
     :param tick: How many seconds to wait between each lookup
     :param xp: How much xp should be earned per tick
     :param guilds: (Optional) Uses all guilds the bot is in by default
+    :param update_channel: (Optional) will post a nice embed for when a users xp is successfully updated
     :return: The function that will stop the cycle once called
     """
 
@@ -195,7 +232,8 @@ def run_main_lurkr(
         afk=afk,
         tick=tick,
         xp=xp,
-        guilds=guilds
+        guilds=guilds,
+        update_channel=update_channel
     ))
 
     def close():

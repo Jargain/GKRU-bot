@@ -1,7 +1,9 @@
 import discord
+from _testcapi import awaitType
+from discord import Member
 from discord.ext.commands import Context
 
-from config import bot_administrators, authorized_guild, apiClient
+from config import settings, apiClient
 
 async def has_ban_permission(user: discord.Member) -> bool:
     """
@@ -10,7 +12,7 @@ async def has_ban_permission(user: discord.Member) -> bool:
     """
     if not apiClient:
         return False
-    real_user = apiClient.get_guild(authorized_guild).get_member(user.id)
+    real_user = apiClient.get_guild(settings.authorized_guild).get_member(user.id)
     if not real_user:
         return False
     perms = real_user.guild_permissions.ban_members or real_user.guild_permissions.administrator
@@ -26,7 +28,7 @@ async def is_admin(user: discord.Member, trueAdmin: bool) -> bool:
     """
     if not apiClient:
         return False
-    real_user = apiClient.get_guild(authorized_guild).get_member(user.id)
+    real_user = apiClient.get_guild(settings.authorized_guild).get_member(user.id)
     if not real_user:
         return False
     perms = real_user.guild_permissions.administrator if trueAdmin else real_user.guild_permissions.manage_guild
@@ -39,7 +41,7 @@ async def is_bot_admin(user: discord.Member) -> bool:
     Checks is the given user is a bot administrator.
     :param user: The user to check
     """
-    return int(user.id) in bot_administrators
+    return int(user.id) in settings.bot_administrators
 
 async def is_bot_admin_ctx(ctx: Context) -> bool:
     """
@@ -49,3 +51,28 @@ async def is_bot_admin_ctx(ctx: Context) -> bool:
     if not isinstance(ctx.author, discord.Member):
         return False
     return await is_bot_admin(ctx.author)
+
+async def _find_permission_integer(member: Member):
+    highest = 0
+    for role in member.roles:
+        if (str(role.id) in settings.permission_integer_roles) and settings.permission_integer_roles.get(str(role.id)) > highest:
+            highest = settings.permission_integer_roles.get(str(role.id))
+    return 8 if await is_bot_admin(member) else highest
+
+async def has_permission_integer(ctx: Context, permission_integer: int):
+    """
+    Check is the given users role has the needed permission integer.
+    1 - Event Staff
+    2 - Trial Staff
+    3 - Normal Staff
+    4 - Senior Staff
+    5 - Management
+
+    :param ctx:
+    :param permission_integer:
+    :return:
+    """
+    if not isinstance(ctx.author, Member):
+        return False
+    obtained_int = await _find_permission_integer(ctx.author)
+    return (obtained_int >= permission_integer) or await is_bot_admin(ctx.author)

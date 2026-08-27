@@ -3,7 +3,7 @@ from loguru import logger
 from sqlite3 import DatabaseError
 import os
 import aiosqlite
-from config import schema_migrations_dir
+from config import settings
 
 async def get_schema_cursor(con: aiosqlite.Connection):
     await con.execute("""
@@ -32,11 +32,11 @@ def get_checksum(item: str):
 
 async def build_schema_table():
     table = {}
-    list = os.listdir(schema_migrations_dir)
+    list = os.listdir(settings.schema_migrations_dir)
     logger.debug(f"Create list: {list}")
     for item in list:
         value, name = await get_schema_id_from_file_name(item)
-        item_path = f"{schema_migrations_dir}/{item}"
+        item_path = f"{settings.schema_migrations_dir}/{item}"
         with open(item_path) as f:
             content = f.read()
             checksum = get_checksum(item=item_path)
