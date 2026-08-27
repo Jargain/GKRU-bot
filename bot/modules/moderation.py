@@ -121,7 +121,7 @@ def build_log_embed(
     embed = Embed(
         title=f"Moderation log | {member.name} ({member.id})",
         color=Color.dark_red(),
-        description="Moderation action was taken against a user. Attach any Evidence in the thread bellow. Leaving it empty may result in a strike.",
+        description=f"Moderation action was taken against a user. Attach any Evidence in the thread bellow. Leaving it empty may result in a strike. \n \n **Member**: {member.mention}",
         timestamp=datetime.now()
     )
     logger.debug("Setting embed thumbnail...")
