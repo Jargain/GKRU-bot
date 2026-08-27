@@ -1,21 +1,26 @@
+from typing import Optional
+
 import discord
-from discord import app_commands
+from discord import app_commands, Embed
+from discord.utils import MISSING
 from discord.ext import commands
 from discord.ext.commands import Context
 
 from utils.errors import PermissionCheckError
 from utils.permissions import is_bot_admin_ctx, has_permission_integer
 
-async def attempt_ephemeral(ctx: Context, reply: str):
+async def attempt_ephemeral(ctx: Context, reply: str | MISSING = MISSING, embed: Embed | MISSING = MISSING, delete_after: int | MISSING = 5):
     if ctx.interaction:
         await ctx.interaction.response.send_message(
             content=reply,
+            embed=embed,
             ephemeral=True
         )
     else:
         await ctx.reply(
             content=reply,
-            delete_after=5
+            embed=embed,
+            delete_after=delete_after
         )
 
 def chybrid_command(

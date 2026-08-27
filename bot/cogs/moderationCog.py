@@ -1,11 +1,29 @@
-from discord import Member, app_commands
+from operator import add
+from uuid import UUID
+
+from discord import Member, app_commands, Embed, Color, User
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
+from discord.utils import MISSING
 from loguru import logger
 
 from config import settings
+from server.db.access import get_user_id_from_code
 from utils.commandUtils import chybrid_command, attempt_ephemeral
 from bot.modules.moderation import LoaModal, attempt_log
+
+def build_member_embed(
+        code: str,
+        member: Member | User
+) -> Embed:
+    embed = Embed(
+        color=Color.green(),
+        title=f"{member.display_name} ( {member.name} | {member.id} )",
+        description=f" **Code**: {code} \n \n **Member**: {member.mention}"
+    )
+    embed.set_thumbnail(url=member.avatar.url if member.avatar is not None else member.default_avatar.url)
+    return embed
+
 
 class ModerationCog(commands.Cog):
 
@@ -63,6 +81,37 @@ class ModerationCog(commands.Cog):
             await attempt_ephemeral(
                 ctx, "Filed to create log message"
             )
+
+    @chybrid_command(
+        name="getlink",
+        description="Get the discord user from their generated uuid.",
+        guilds=[settings.authorized_guild],
+        permission_int=3
+    )
+    @app_commands.describe(
+        code="The code given from the user."
+    )
+    async def get_link(self, ctx: Context, code: str):
+        user_id = await get_user_id_from_code(
+            code=code
+        )
+        if not user_id:
+            await attempt_ephemeral(
+                ctx, "I couldn't find a user associated with that code."
+            )
+            return
+        user = await self.bot.fetch_user(user_id)
+        if not user:
+            await attempt_ephemeral(
+                ctx, f"I couldn't fetch member: {user_id}"
+            )
+            return
+        embed = build_member_embed(
+            code, user
+        )
+        await attempt_ephemeral(
+            ctx, embed=embed, delete_after=MISSING
+        )
 
 
 async def setup(bot: Bot):
