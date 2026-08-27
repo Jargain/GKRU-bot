@@ -45,7 +45,7 @@ class AdministrationCog(commands.Cog):
 
     @chybrid_command(
         name="setevent",
-        description="Sets the permission integer of the given role.",
+        description="Sets the current channel as an event channel that should be monitored.",
         bot_admin=True,
         guilds=[settings.authorized_guild],
     )
@@ -116,7 +116,7 @@ class AdministrationCog(commands.Cog):
         bot_admin=True,
         guilds=[settings.authorized_guild],
     )
-    async def set_log_channel(self, ctx: Context):
+    async def set_xp_log_channel(self, ctx: Context):
         settings.lurkr_updatechannel = ctx.channel.id
 
         if settings.lurkr_updatechannel == ctx.channel.id:
@@ -130,6 +130,33 @@ class AdministrationCog(commands.Cog):
                 "Failed to set xp logging channel."
             )
 
+
+    @chybrid_command(
+        name="delevent",
+        description="Removes the current channel from the list of event channels.",
+        bot_admin=True,
+        guilds=[settings.authorized_guild],
+    )
+    async def set_event_channel(self, ctx: Context):
+        try:
+            channels = list(settings.event_channels)
+            channels.remove(ctx.channel.id)
+            settings.event_channels = channels
+
+            if settings.event_channels[-1] == ctx.channel.id:
+                logger.debug("Deleted event channel successfully")
+                await attempt_ephemeral(
+                    ctx,
+                    f"Successfully removed channel {ctx.channel.name} from being an event channel."
+                )
+            else:
+                logger.warning("Did not remove event channel successfully")
+                await attempt_ephemeral(
+                    ctx,
+                    "Failed to remove event channel."
+                )
+        except Exception as e:
+            logger.warning(f"Failed to remove event channel because: {e}")
 
 
 async def setup(bot: Bot):
