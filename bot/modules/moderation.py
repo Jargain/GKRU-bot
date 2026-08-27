@@ -119,14 +119,14 @@ def build_log_embed(
 ) -> Embed:
     logger.debug("Creating embed...")
     embed = Embed(
-        title="Moderation log",
+        title=f"Moderation log | {member.name} ({member.id})",
         color=Color.dark_red(),
         description="Moderation action was taken against a user. Attach any Evidence in the thread bellow. Leaving it empty may result in a strike.",
         timestamp=datetime.now()
     )
     logger.debug("Setting embed thumbnail...")
     embed.set_thumbnail(
-        url=member.avatar.url
+        url=member.avatar.url or member.default_avatar.url
     )
     logger.debug("Adding embed fields...")
     embed.add_field(
@@ -142,7 +142,7 @@ def build_log_embed(
     logger.debug("Setting embed author...")
     embed.set_author(
         name=moderator.name,
-        icon_url=moderator.avatar.url
+        icon_url=moderator.avatar.url or moderator.default_avatar.url
     )
     return embed
 
@@ -169,7 +169,7 @@ def build_loa_embed(
         value=duration
     )
     embed.set_thumbnail(
-        url=member.avatar.url
+        url=member.avatar.url or member.default_avatar.url
     )
     return embed
 
@@ -237,7 +237,7 @@ class LoaModal(ui.Modal, title="Submit new LOA Notice"):
     )
 
     async def on_submit(self, interaction: Interaction, /) -> None:
-        await interaction.followup.send(
+        await interaction.response.send_message(
             content="Thanks for being honest, your notice has been handed in :3",
             ephemeral=True
         )
@@ -249,7 +249,7 @@ class LoaModal(ui.Modal, title="Submit new LOA Notice"):
         )
 
     async def on_error(self, interaction: Interaction[ClientT], error: Exception, /) -> None:
-        await interaction.followup.send(
+        await interaction.response.send_message(
             content="Sorry, unable to process request.",
             ephemeral=True
         )
