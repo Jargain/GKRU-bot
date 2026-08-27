@@ -65,7 +65,7 @@ class ModerationCog(commands.Cog):
         reason="The reason for the moderation action taken.",
         action="The moderation action taken"
     )
-    async def log(self, ctx: Context, member: Member, reason: str, action: str):
+    async def log(self, ctx: Context, member: Member | User, reason: str, action: str):
         log_msg = await attempt_log(
             moderator=ctx.author,
             member=member,

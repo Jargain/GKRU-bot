@@ -113,7 +113,7 @@ async def handle_event_message(botClient: Bot, message: Message):
 
 def build_log_embed(
         moderator: Member | User,
-        member: Member,
+        member: Member | User,
         reason: str,
         action: str
 ) -> Embed:
@@ -175,7 +175,7 @@ def build_loa_embed(
 
 async def attempt_log(
         moderator: Member | User,
-        member: Member,
+        member: Member | User,
         reason: str,
         action: str,
         botClient: Bot
