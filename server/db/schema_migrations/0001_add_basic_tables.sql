@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS ban_queue (
 CREATE TABLE IF NOT EXISTS audit_log (
         discord_userid INTEGER PRIMARY KEY,
         action TEXT,
-        time INTEGER,
+        time INTEGER
 );
 CREATE TABLE IF NOT EXISTS ban_link (
         case_uuid TEXT PRIMARY KEY,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS ban_link (
         discord_userid INTEGER,
         discord_username TEXT,
         rover_obtained TEXT,
-        rover_obtain_date INTEGER,
+        rover_obtain_date INTEGER
 );
 CREATE TABLE IF NOT EXISTS restart (
         time INTEGER PRIMARY KEY,

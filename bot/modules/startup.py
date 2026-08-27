@@ -1,19 +1,21 @@
 import mimetypes
 
-from discord import Client, Intents, Status, CustomActivity, PartialEmoji
-from discord.ext.commands import Bot
+from discord import Intents, Status, CustomActivity, PartialEmoji, Message
+from discord.ext.commands import Bot, Context, CommandError
 from loguru import logger
 
 import config
-from config import bot_token, cogs_dir, setApiClient, authorized_guild, lurkr_afk, lurkr_guilds, lurkr_api_key, lurkr_xp, lurkr_tick
+from bot.modules.moderation import handle_event_message
+from config import settings, setApiClient
 from utils.runtimeUtils import startBot
+from utils.errors import onCommandError
 from bot.cogs.utilsCog import try_update_restart_message
 import os
 from bot.modules.lurkr import run_main_lurkr
 
 
 async def register_cogs(client: Bot):
-    cogs = os.listdir(cogs_dir)
+    cogs = os.listdir(settings.cogs_dir)
     for cog in cogs:
         if "python" not in str(mimetypes.guess_type(cog)[0]):
             continue
@@ -59,17 +61,18 @@ async def onReady(botClient: Bot):
             activity=activity,
             status=Status.idle  # idle bcz testing yk
         )
-        await sync_cmds(botClient, authorized_guild)
+        await sync_cmds(botClient, settings.authorized_guild)
         cmds = [cmd.name for cmd in botClient.tree.get_commands()]
         logger.debug(f"Global commands: {cmds}")
         await try_update_restart_message(botClient)
         close_lurkr = run_main_lurkr(
             susannaClient=botClient,
-            tick=lurkr_tick,
-            afk=lurkr_afk,
-            lurkr_token=lurkr_api_key,
-            xp=lurkr_xp,
-            guilds=lurkr_guilds
+            tick=settings.lurkr_tick,
+            afk=settings.lurkr_afk,
+            lurkr_token=settings.lurkr_api_key,
+            xp=settings.lurkr_xp,
+            guilds=settings.lurkr_guilds,
+            update_channel=settings.lurkr_updatechannel
         )
         config.lurkr_close = close_lurkr
         logger.info("OnReady finished")
@@ -81,8 +84,19 @@ async def onReady(botClient: Bot):
 async def setup_hook(botClient: Bot):
     await register_cogs(client=botClient)
 
+async def _on_command_error(ctx: Context, error: CommandError):
+    await onCommandError(ctx,error)
+
+async def _on_message(botClient: Bot, message: Message):
+    logger.debug("Checking message")
+    if message.channel.id in settings.event_channels:
+        logger.debug("Found event message, handing over...")
+        await handle_event_message(
+            botClient, message
+        )
+
 async def startup():
-    token = bot_token
+    token = settings.bot_token
     logger.debug(f"Token is: {token[10:] if token else "No token"}")
     if not token:
         raise ValueError("BOT TOKEN IS NONE OH SHITTINGS")
@@ -103,6 +117,19 @@ async def startup():
     @client.event
     async def on_ready():
         await onReady(client)
+
+    @client.event
+    async def on_command_error(ctx: Context, error: CommandError):
+        await _on_command_error(ctx, error)
+
+    @client.event
+    async def on_message(message: Message):
+        if message.author.bot:
+            return
+        await _on_message(
+            client, message
+        )
+        await client.process_commands(message)
 
     await startBot(token, client)
 

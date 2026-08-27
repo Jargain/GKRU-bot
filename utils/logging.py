@@ -2,18 +2,18 @@ import logging
 import sys
 from logging import DEBUG
 
-from config import hypercorn_level_override, logging_level, log_hypercorn, log_discord, root_log_level, loguru_fmt, log_sql
+from config import settings
 from loguru import logger
 
 
 class InterceptHandler(logging.Handler):
     def emit(self, record):
 
-        if not log_hypercorn and (record.name.startswith("hypercorn") or record.name.startswith("quart")):
+        if not settings.log_hypercorn and (record.name.startswith("hypercorn") or record.name.startswith("quart")):
             return
-        if not log_discord and record.name.startswith("discord"):
+        if not settings.log_discord and record.name.startswith("discord"):
             return
-        if not log_sql and record.name.startswith("aiosqlite"):
+        if not settings.log_sql and record.name.startswith("aiosqlite"):
             return
 
         try:
@@ -22,7 +22,7 @@ class InterceptHandler(logging.Handler):
             level = record.levelno
 
         if record.name == "hypercorn.access" or "access":
-            level = hypercorn_level_override
+            level = settings.hypercorn_level_override
 
         frame, depth = logging.currentframe(), 2
         while frame.f_code.co_filename == logging.__file__:
@@ -49,10 +49,10 @@ def create_logging_list():
 def setup_logging():
     logger.remove(0)
 
-    logger.add(sink=sys.stderr, level=logging_level, format=loguru_fmt)
+    logger.add(sink=sys.stderr, level=settings.logging_level, format=settings.loguru_fmt)
 
     logging.root.handlers = [InterceptHandler()]
-    logging.root.setLevel(root_log_level)
+    logging.root.setLevel(settings.root_log_level)
 
     list_of_loggers = create_logging_list()
 
