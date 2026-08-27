@@ -1,6 +1,6 @@
-from multiprocessing.context import BufferTooShort
-from typing import Optional
 
+
+import random
 import discord
 from discord._types import ClientT
 from discord.ui import Button, View
@@ -196,7 +196,7 @@ async def attempt_log(
         )
         logger.debug("Sent message, creating thread...")
         await log_msg.create_thread(
-            name=f"User: {member.name} ({member.id}) | {datetime.now()}",
+            name=f"User: {member.name} ({member.id}) | {random.randint(a=1,b=50)}",
             auto_archive_duration=10080
         )
 
