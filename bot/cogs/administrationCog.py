@@ -110,6 +110,26 @@ class AdministrationCog(commands.Cog):
                 "Failed to set logging channel."
             )
 
+    @chybrid_command(
+        name="setxplog",
+        description="Sets the current channel as the logging channel",
+        bot_admin=True,
+        guilds=[settings.authorized_guild],
+    )
+    async def set_log_channel(self, ctx: Context):
+        settings.lurkr_updatechannel = ctx.channel.id
+
+        if settings.lurkr_updatechannel == ctx.channel.id:
+            await attempt_ephemeral(
+                ctx,
+                f"Successfully set channel {ctx.channel.name} as xp logging channel."
+            )
+        else:
+            await attempt_ephemeral(
+                ctx,
+                "Failed to set xp logging channel."
+            )
+
 
 
 async def setup(bot: Bot):
