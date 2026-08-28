@@ -35,7 +35,9 @@ class ClaimView(View):
         self.botClient = botClient
 
     async def claim_callback(self, interaction: Interaction):
+        logger.info(f"New warn claim attempt from: {interaction.user.name}")
         await interaction.response.defer(ephemeral=True, thinking=True)
+        logger.info(f"Moving forward with the claim...")
 
         if not interaction.message:
             await interaction.followup.send(
@@ -46,11 +48,14 @@ class ClaimView(View):
             raise InteractionMessageNone("Failed to get interaction message for a possible warning.")
 
         mod = interaction.user
+        logger.debug(f"Moving forward with the claim 2")
         new_embed = edit_embed(mod, interaction.message.embeds)
+        logger.debug(f"Moving forward with the claim 3")
 
         self.claim_button.style = ButtonStyle.danger
         self.claim_button.label = "Claimed"
         self.claim_button.disabled = True
+        logger.debug(f"Moving forward with the claim 4")
 
         await interaction.followup.send(
             content="Claimed warning!",
