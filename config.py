@@ -25,7 +25,7 @@ class mode(Enum):
 def get_env_var(k: str):
     return environ.get(k.upper()) or environ.get(k.lower()) or environ.get(k)
 
-current_mode = mode.LIVE
+current_mode = mode.DEBUG
 
 class _Settings(JSONClass):
 
@@ -47,30 +47,30 @@ class _Settings(JSONClass):
     max_retry: int = 4
 
     bot_token : str = str(get_env_var("bot_token") if current_mode == mode.LIVE else get_env_var("testing_bot_token"))
-    authorized_guild : int = 1532717797292113971 if current_mode == mode.LIVE else 1237911337057648790
+    authorized_guild : int = 1532717797292113971 if current_mode == mode.LIVE else 1542806729358581811
 
     lurkr_tick: int = 10
     lurkr_xp: int = 4
     lurkr_afk : bool = False
     lurkr_api_key : str = str(get_env_var("lurkr_api_key"))
     lurkr_guilds : list[int] = [authorized_guild]
-    lurkr_updatechannel: int = 1539970407115919470 if current_mode == mode.LIVE else 1540825740386377828
+    lurkr_updatechannel: int = 1539970407115919470 if current_mode == mode.LIVE else 1542806920451325962
 
     bot_administrators: list[int] = [
         1086979130572165231
     ]
 
-    logging_channel : int = 1541927704096415825
+    logging_channel : int = 1542806901291749447
     permission_integer_roles : Dict[str, int] = {}
     event_channels : list[int] = []
-    warn_logs_channel : int = 1541956022057574450
+    warn_logs_channel : int = 1542806883482607666
 
 
 settings = _Settings()
 
-settings.authorized_guild = 1532717797292113971 if current_mode == mode.LIVE else 1237911337057648790
+settings.authorized_guild = 1532717797292113971 if current_mode == mode.LIVE else 1542806729358581811
 settings.bot_token = str(get_env_var("bot_token") if current_mode == mode.LIVE else get_env_var("testing_bot_token"))
-settings.lurkr_updatechannel = 1539970407115919470 if current_mode == mode.LIVE else 1540825740386377828
+settings.lurkr_updatechannel = 1539970407115919470 if current_mode == mode.LIVE else 1542806920451325962
 settings.lurkr_guilds = [settings.authorized_guild]
 
 settings.logging_level = "DEBUG" if current_mode == mode.LIVE else "DEBUG"

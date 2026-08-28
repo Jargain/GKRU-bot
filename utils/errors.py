@@ -21,6 +21,10 @@ class PermissionCheckError(CommandError):
     """Raised when a user does not have the needed permissions."""
     pass
 
+class InteractionMessageNone(CommandError):
+    """Raised when an interaction.message is None or another error has occurred."""
+    pass
+
 async def onCommandError(ctx: Context, error: CommandError, botClient: Bot):
 
     if isinstance(error, PermissionCheckError):

@@ -1,5 +1,4 @@
-
-
+import asyncio
 import random
 import discord
 from discord._types import ClientT
@@ -10,10 +9,21 @@ from discord import Embed, Member, Color, TextChannel, User, ui, Interaction, Me
 from discord.ext.commands import Bot
 
 from config import settings
+from utils.errors import InteractionMessageNone
 from utils.permissions import _find_permission_integer
 
+async def setClaimButtonError(claim_button: Button):
+        claim_button.style = ButtonStyle.danger
+        claim_button.disabled = True
+        claim_button.label = "Error"
+        await asyncio.sleep(5)
+        claim_button.disabled = False
+        claim_button.label = "Claim"
+        claim_button.style = ButtonStyle.success
+
+
 class ClaimView(View):
-    def __init__(self, jump_url: str):
+    def __init__(self, jump_url: str, botClient: Bot):
         super().__init__()
         self.add_item(Button(label="Message", url=jump_url))
         self.claim_button = Button(
@@ -22,9 +32,18 @@ class ClaimView(View):
         )
         self.claim_button.callback = self.claim_callback
         self.add_item(self.claim_button)
+        self.botClient = botClient
 
     async def claim_callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
+
+        if not interaction.message:
+            await interaction.followup.send(
+                content="There was an error processing this request, an error log has been forwarded to all admins.",
+                ephemeral=True
+            )
+            asyncio.create_task(setClaimButtonError(claim_button=self.claim_button))
+            raise InteractionMessageNone("Failed to get interaction message for a possible warning.")
 
         mod = interaction.user
         new_embed = edit_embed(mod, interaction.message.embeds)
@@ -33,13 +52,14 @@ class ClaimView(View):
         self.claim_button.label = "Claimed"
         self.claim_button.disabled = True
 
-        await interaction.message.edit(
-            embed=new_embed,
-            view=self
-        )
         await interaction.followup.send(
             content="Claimed warning!",
             ephemeral=True
+        )
+
+        await interaction.message.edit(
+            embed=new_embed,
+            view=self
         )
 
 def build_warn_embed(
@@ -101,7 +121,7 @@ async def handle_event_message(botClient: Bot, message: Message):
         embed = build_warn_embed(
             member=message.author
         )
-        view = ClaimView(jump_url=message.jump_url)
+        view = ClaimView(jump_url=message.jump_url, botClient=botClient)
 
         await log_channel.send(
             embed=embed,
