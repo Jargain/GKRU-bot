@@ -10,6 +10,8 @@ from discord import Message, Member, User
 from loguru import logger
 
 from server.db.connection import create_init_db
+from utils.enums import eventAccess
+from utils.eventUtils import event_log
 
 con: Optional[aiosqlite.Connection] = None
 
@@ -132,4 +134,31 @@ async def get_code_from_user_id(
     await cursor.close()
     return UUID(hex=code[0]) if code is not None else None
 
+async def log_event(
+        member: User | Member,
+        accessType: eventAccess
+):
+    cursor = await con.cursor()
+    await cursor.execute("""
+        INSERT INTO event_logs (timestamp, userid, access)
+            VALUES (?,?,?)
+    """, (int(time()), member.id, int(accessType.value)))
+    await cursor.close()
 
+async def get_event_logs(
+        member: User | Member
+) -> list[event_log] | None:
+    cursor = await con.cursor()
+    await cursor.execute("""
+        SELECT * FROM event_logs WHERE userid = ?
+    """, [member.id])
+    entries = await cursor.fetchall()
+    event_logs: list[event_log] = []
+    for row in entries:
+        event_logs.append(
+            event_log(
+                timestamp=row[0],
+                access_type=eventAccess(row[2])
+            )
+        )
+    return event_logs or None

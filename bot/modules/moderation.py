@@ -11,61 +11,8 @@ from discord.ext.commands import Bot
 from config import settings
 from utils.errors import InteractionMessageNone
 from utils.permissions import _find_permission_integer
+from utils.viewUtils import ClaimView
 
-async def setClaimButtonError(claim_button: Button):
-        claim_button.style = ButtonStyle.danger
-        claim_button.disabled = True
-        claim_button.label = "Error"
-        await asyncio.sleep(5)
-        claim_button.disabled = False
-        claim_button.label = "Claim"
-        claim_button.style = ButtonStyle.success
-
-
-class ClaimView(View):
-    def __init__(self, jump_url: str, botClient: Bot):
-        super().__init__()
-        self.add_item(Button(label="Message", url=jump_url))
-        self.claim_button = Button(
-            label="Claim",
-            style=ButtonStyle.success
-        )
-        self.claim_button.callback = self.claim_callback
-        self.add_item(self.claim_button)
-        self.botClient = botClient
-
-    async def claim_callback(self, interaction: Interaction):
-        logger.info(f"New warn claim attempt from: {interaction.user.name}")
-        await interaction.response.defer(ephemeral=True, thinking=True)
-        logger.info(f"Moving forward with the claim...")
-
-        if not interaction.message:
-            await interaction.followup.send(
-                content="There was an error processing this request, an error log has been forwarded to all admins.",
-                ephemeral=True
-            )
-            asyncio.create_task(setClaimButtonError(claim_button=self.claim_button))
-            raise InteractionMessageNone("Failed to get interaction message for a possible warning.")
-
-        mod = interaction.user
-        logger.debug(f"Moving forward with the claim 2")
-        new_embed = edit_embed(mod, interaction.message.embeds)
-        logger.debug(f"Moving forward with the claim 3")
-
-        self.claim_button.style = ButtonStyle.danger
-        self.claim_button.label = "Claimed"
-        self.claim_button.disabled = True
-        logger.debug(f"Moving forward with the claim 4")
-
-        await interaction.followup.send(
-            content="Claimed warning!",
-            ephemeral=True
-        )
-
-        await interaction.message.edit(
-            embed=new_embed,
-            view=self
-        )
 
 def build_warn_embed(
         member: Member | User,
@@ -85,20 +32,6 @@ def build_warn_embed(
     )
     return embed
 
-def edit_embed(
-        moderator: Member | User,
-        old: list[Embed]
-) -> Embed:
-    new_embed = Embed(
-        title=f"Possible Warning: Claimed by {moderator.name}",
-        description="A Possible warning / DQ has been found. Please review as soon as possible.",
-        color=Color.green()
-    )
-    old_embed = old[0]
-    new_embed.set_thumbnail(
-        url=old_embed.thumbnail.url
-    )
-    return new_embed
 
 
 async def handle_event_message(botClient: Bot, message: Message):

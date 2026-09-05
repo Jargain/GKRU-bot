@@ -64,6 +64,7 @@ class _Settings(JSONClass):
     permission_integer_roles : Dict[str, int] = {}
     event_channels : list[int] = []
     warn_logs_channel : int = 1542806883482607666
+    class_channel : int = 0
 
 
 settings = _Settings()
@@ -78,7 +79,7 @@ settings.log_discord = True if current_mode == mode.DEBUG else False
 settings.log_hypercorn = True if current_mode == mode.DEBUG else False
 settings.log_sql = True if current_mode == mode.DEBUG else False
 
-
+class_count = 0
 lurkr_close = lambda: None
 api_shutdown = asyncio.Event()
 

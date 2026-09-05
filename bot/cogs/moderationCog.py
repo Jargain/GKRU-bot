@@ -8,7 +8,7 @@ from discord.utils import MISSING
 from loguru import logger
 
 from config import settings
-from server.db.access import get_user_id_from_code
+from server.db.access import get_user_id_from_code, get_code_from_user_id
 from utils.commandUtils import chybrid_command, attempt_ephemeral
 from bot.modules.moderation import LoaModal, attempt_log
 
@@ -111,6 +111,34 @@ class ModerationCog(commands.Cog):
         )
         await attempt_ephemeral(
             ctx, embed=embed, delete_after=MISSING
+        )
+
+    @chybrid_command(
+        name="getcode",
+        description="Get the generated uuid from their discord user.",
+        guilds=[settings.authorized_guild],
+        permission_int=3
+    )
+    @app_commands.describe(
+        user="The user to get the code from."
+    )
+    async def get_link(self, ctx: Context, user: Member | User):
+
+        code = await get_code_from_user_id(
+            user.id
+        )
+
+        if not code:
+            await attempt_ephemeral(
+                ctx, "I couldn't find a code associated with that user."
+            )
+            return
+
+        embed = build_member_embed(
+            code.hex, user
+        )
+        await attempt_ephemeral(
+            ctx, embed=embed, delete_after=None
         )
 
 

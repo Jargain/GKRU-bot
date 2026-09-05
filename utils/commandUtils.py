@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 
 import discord
 from discord import app_commands, Embed
@@ -9,19 +9,27 @@ from discord.ext.commands import Context
 from utils.errors import PermissionCheckError
 from utils.permissions import is_bot_admin_ctx, has_permission_integer
 
-async def attempt_ephemeral(ctx: Context, reply: str | MISSING = MISSING, embed: Embed | MISSING = MISSING, delete_after: int | MISSING = 5):
+async def attempt_ephemeral(ctx: Context, reply: Optional[str] = None, embed: Optional[Embed] = None, delete_after: Optional[float] = 5.0):
     if ctx.interaction:
-        await ctx.interaction.response.send_message(
-            content=reply,
-            embed=embed,
-            ephemeral=True
-        )
+        kwargs: dict[str, Any] = {
+            "ephemeral": True
+        }
+        if reply is not None:
+            kwargs["content"] = reply
+        if embed is not None:
+            kwargs["embed"] = embed
+        await ctx.interaction.response.send_message(**kwargs)
     else:
-        await ctx.reply(
-            content=reply,
-            embed=embed,
-            delete_after=delete_after
-        )
+        kwargs: dict[str, Any] = {
+            "ephemeral": True
+        }
+        if reply is not None:
+            kwargs["content"] = reply
+        if embed is not None:
+            kwargs["embed"] = embed
+        if delete_after is not None:
+            kwargs["delete_after"] = delete_after
+        await ctx.reply(**kwargs)
 
 def chybrid_command(
     *,
